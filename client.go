@@ -100,12 +100,27 @@ func (c *Client) post(ctx context.Context, endpoint string, request any) ([]byte
 		return nil, fmt.Errorf("error marshaling request: %w", err)
 	}
 
-	fmt.Println(string(b))
-
 	body := bytes.NewReader(b)
 	url := fmt.Sprintf("%v%v", c.apiUrl, endpoint)
 
 	req, err := http.NewRequestWithContext(ctx, "POST", url, body)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request: %w", err)
+	}
+
+	req.Header.Add(Authorization_HEADER, fmt.Sprintf("Bearer %v", c.apiKey))
+	req.Header.Add("content-type", "application/json")
+
+	return c.doRequest(req)
+}
+
+func (c *Client) get(ctx context.Context, endpoint string) ([]byte, error) {
+	if c.apiKey == "" {
+		return nil, ErrNoApiKey
+	}
+
+	url := fmt.Sprintf("%v%v", c.apiUrl, endpoint)
+	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("error creating request: %w", err)
 	}

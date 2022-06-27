@@ -9,6 +9,20 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+const PRICES_ENDPOINT = "/prices"
+
+type CurrencyPrices struct {
+	Currency     string                  `json:"currency"`
+	CryptoAssets map[string]*CryptoAsset `json:"crypto_assets"`
+}
+
+type CryptoAsset struct {
+	Ask    json.Number `json:"ask"`
+	AskVol json.Number `json:"ask_vol"`
+	Bid    json.Number `json:"bid"`
+	BidVol json.Number `json:"bid_vol"`
+}
+
 type LiquidityBook struct {
 	Asks [][]string
 	Bids [][]string
@@ -16,6 +30,21 @@ type LiquidityBook struct {
 
 const HYPHE_PRICE_CHANNEL_NAME = "prices"
 const HYPHE_PRICE_EVENT = "price"
+
+func (c *Client) Prices(ctx context.Context) (*CurrencyPrices, error) {
+	b, err := c.get(ctx, PRICES_ENDPOINT)
+	if err != nil {
+		return nil, fmt.Errorf("error during request: %w", err)
+	}
+
+	result := new(CurrencyPrices)
+	err = json.Unmarshal(b, result)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshaling response: %w", err)
+	}
+
+	return result, nil
+}
 
 func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset string) (*LiquidityBook, error) {
 	symbol := fmt.Sprintf("%v-%v", baseAsset, quoteAsset)
