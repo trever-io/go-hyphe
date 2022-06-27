@@ -31,6 +31,10 @@ func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset
 	}
 
 	conn, err := c.connect(ctx, &auth, &sub)
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to websocket: %w", err)
+	}
+	defer conn.Close()
 
 	book, err := getLiquidityBookSnapshot(conn)
 	if err != nil {
