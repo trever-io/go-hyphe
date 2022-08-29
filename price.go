@@ -23,7 +23,7 @@ type CryptoAsset struct {
 	BidVol json.Number `json:"bid_vol"`
 }
 
-type LiquidityBook struct {
+type OrderBook struct {
 	Asks [][]string
 	Bids [][]string
 }
@@ -46,7 +46,7 @@ func (c *Client) Prices(ctx context.Context) (*CurrencyPrices, error) {
 	return result, nil
 }
 
-func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset string) (*LiquidityBook, error) {
+func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset string) (*OrderBook, error) {
 	symbol := fmt.Sprintf("%v-%v", baseAsset, quoteAsset)
 
 	auth := authenticationMessage{
@@ -65,7 +65,7 @@ func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset
 	}
 	defer conn.Close()
 
-	book, err := getLiquidityBookSnapshot(conn)
+	book, err := getOrderBookSnapshot(conn)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +74,7 @@ func (c *Client) GetPriceEvent(ctx context.Context, baseAsset string, quoteAsset
 
 }
 
-func getLiquidityBookSnapshot(conn *websocket.Conn) (*LiquidityBook, error) {
+func getOrderBookSnapshot(conn *websocket.Conn) (*OrderBook, error) {
 	for {
 		_, data, err := conn.ReadMessage()
 		if err == io.EOF {
@@ -92,12 +92,12 @@ func getLiquidityBookSnapshot(conn *websocket.Conn) (*LiquidityBook, error) {
 			return nil, err
 		}
 
-		var book *LiquidityBook
+		var book *OrderBook
 		if *msg.Event == HYPHE_PRICE_EVENT {
 			asks := msg.Asks
 			bids := msg.Bids
 
-			book = &LiquidityBook{Asks: asks, Bids: bids}
+			book = &OrderBook{Asks: asks, Bids: bids}
 		} else {
 			return nil, fmt.Errorf("unexpected event: %v", *msg.Event)
 		}
